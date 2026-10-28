@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  labels: { app: payment-service }
+spec:
+  replicas: 2   # consumers in one group split the topic's partitions
+  selector:
+    matchLabels: { app: payment-service }
+  template:
+    metadata:
+      labels: { app: payment-service }
+    spec:
+      containers:
+        - name: payment-service
+          image: ghcr.io/monirul-islam7774/kafka-microservices-nestjs:latest
+          env:
+            - { name: SERVICE, value: payment-service }
+          envFrom:
+            - configMapRef: { name: kafka-config }
+          resources:
+            requests: { cpu: 50m, memory: 96Mi }
+            limits: { cpu: 250m, memory: 256Mi }

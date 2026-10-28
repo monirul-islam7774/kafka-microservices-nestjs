@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels: { app: order-service }
+spec:
+  replicas: 1   # in-memory store; scale out after moving orders to Postgres
+  selector:
+    matchLabels: { app: order-service }
+  template:
+    metadata:
+      labels: { app: order-service }
+    spec:
+      containers:
+        - name: order-service
+          image: ghcr.io/monirul-islam7774/kafka-microservices-nestjs:latest
+          ports: [{ containerPort: 3000 }]
+          env:
+            - { name: SERVICE, value: order-service }
+            - { name: PORT, value: "3000" }
+          envFrom:
+            - configMapRef: { name: kafka-config }
+          readinessProbe:
+            httpGet: { path: /health, port: 3000 }
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 3000 }
+            initialDelaySeconds: 15
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  selector: { app: order-service }
+  ports: [{ port: 80, targetPort: 3000 }]

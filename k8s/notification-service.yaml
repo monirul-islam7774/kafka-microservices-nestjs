@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  labels: { app: notification-service }
+spec:
+  replicas: 2   # consumers in one group split the topic's partitions
+  selector:
+    matchLabels: { app: notification-service }
+  template:
+    metadata:
+      labels: { app: notification-service }
+    spec:
+      containers:
+        - name: notification-service
+          image: ghcr.io/monirul-islam7774/kafka-microservices-nestjs:latest
+          env:
+            - { name: SERVICE, value: notification-service }
+          envFrom:
+            - configMapRef: { name: kafka-config }
+          resources:
+            requests: { cpu: 50m, memory: 96Mi }
+            limits: { cpu: 250m, memory: 256Mi }
